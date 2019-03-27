@@ -1,47 +1,29 @@
 function searchBoard(board, text) {
   if (text.length === 0) return false;
 
-  const traverse = function (position, charIdx, passedCell = []) {
-    if (passedCell.some(({ row, col }) => position.row === row && position.col === col)) return false;
-    if (charIdx === text.length) return true;
-  
-    passedCell.push(position);
+  const traverse = function (position, charIdx = 0, usedCell = []) {
     const { row, col } = position;
-    const char = text.charAt(charIdx);
+    if (charIdx === text.length) return true;                                        // full text matched
+    if (!board[row] || !board[row][col]) return false;                               // not existed cell
+    if (usedCell.some((cell) => cell.row === row && cell.col === col)) return false; // cell was used
 
-    // up 1 cell
-    if (board[row + 1] && board[row + 1][col] === char &&
-      traverse({ row: row + 1, col }, charIdx + 1, [...passedCell])) {
-      return true;
+    if (board[row][col] === text[charIdx]) {
+      usedCell.push(position);
+      const nextCharIdx = charIdx + 1;
+      return traverse({ row: row + 1, col }, nextCharIdx, [...usedCell]) || // move down cell
+             traverse({ row: row - 1, col }, nextCharIdx, [...usedCell]) || // move up cell
+             traverse({ row, col: col + 1 }, nextCharIdx, [...usedCell]) || // move right cell
+             traverse({ row, col: col - 1 }, nextCharIdx, [...usedCell]);   // move left cell
     }
 
-    // down 1 cell
-    if (board[row - 1] && board[row - 1][col] === char &&
-      traverse({ row: row - 1, col }, charIdx + 1, [...passedCell])) {
-     return true;
-    }
-
-    // right 1 cell
-    if (board[row][col + 1] === char &&
-      traverse({ row, col: col + 1 }, charIdx + 1, [...passedCell])) {
-      return true;
-    }
-
-    // left 1 cell
-    if (board[row][col - 1] === char &&
-      traverse({ row, col: col - 1 }, charIdx + 1, [...passedCell])) {
-      return true;
-    }
-  
     return false;
   }
 
   const startChar = text.charAt(0);
   for(let row = 0; row < board.length; row++) {
     for(let col = 0; col < board[row].length; col++) {
-      if (board[row][col] === startChar) {
-        if (traverse({ row, col }, 1)) return true;
-      }
+      const position = { row, col };
+      if (traverse(position)) return true;
     }
   }
 
